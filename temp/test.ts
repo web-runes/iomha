@@ -1,7 +1,7 @@
 import img from "./test.png" with {
-  width: "500",
-  height: "200",
-  format: "webp",
+	format: "webp",
+	height: "200",
+	width: "500",
 };
 
-const image = await getImage({})
+const image = await getImage({});

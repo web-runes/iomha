@@ -19,6 +19,10 @@ importers:
         version: 2.31.0(@types/node@25.6.0)
 
   examples/vite-deploy:
+    dependencies:
+      '@iomha/temp':
+        specifier: 0.0.0
+        version: link:../../packages/temp
     devDependencies:
       '@typescript/native-preview':
         specifier: 7.0.0-dev.20260428.1
@@ -32,6 +36,15 @@ importers:
 
   packages/temp:
     dependencies:
+      image-size:
+        specifier: ^2.0.2
+        version: 2.0.2
+      mrmime:
+        specifier: ^2.0.1
+        version: 2.0.1
+      sharp:
+        specifier: ~0.34.5
+        version: 0.34.5
       vite:
         specifier: ^8.0.0
         version: 8.0.11(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.8.4)

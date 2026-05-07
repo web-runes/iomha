@@ -1,19 +1,11 @@
+import { endpoint } from "@iomha/temp";
 import type { ExportedHandler } from "@vite-deploy/netlify";
 
 export default {
-	fetch(request, context) {
-		console.log(context.ip);
+	fetch(request) {
 		const url = new URL(request.url);
-		if (
-			(import.meta.env.DEV || import.meta.env.PRERENDER) &&
-			url.pathname === "/"
-		) {
-			return new Response("<div>foo</div>", {
-				status: 200,
-				headers: {
-					"Content-Type": "text/html",
-				},
-			});
+		if (url.pathname.startsWith("/_image")) {
+			return endpoint(request, {});
 		}
 		return new Response(`Running ${url.pathname} in ${navigator.userAgent}!`);
 	},

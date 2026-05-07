@@ -38,5 +38,10 @@
 	"devDependencies": {
 		"@types/node": "^25.6.0",
 		"@typescript/native-preview": "7.0.0-dev.20260503.1"
+	},
+	"dependencies": {
+		"image-size": "^2.0.2",
+		"mrmime": "^2.0.1",
+		"sharp": "~0.34.5"
 	}
 }
