@@ -10,12 +10,16 @@ import type {
 	WebpOptions,
 } from "sharp";
 import { etag } from "./etag.js";
-import { isRemotePath } from "./path.js";
+import { isRemotePath, removeQueryString } from "./path.js";
 import { fetchWithRedirects } from "./redirectValidation.js";
 import { isRemoteAllowed, type RemotePattern } from "./remote.js";
 import { detector } from "../../node_modules/image-size/dist/detector.mjs";
 
-async function loadRemoteImage(src: URL, headers: Headers, options: Options) {
+async function loadRemoteImage(
+	src: URL,
+	headers: Headers,
+	options: Pick<Options, "domains" | "remotePatterns">,
+) {
 	try {
 		const res = await fetchWithRedirects({ url: src, headers, options });
 
@@ -32,6 +36,39 @@ async function loadRemoteImage(src: URL, headers: Headers, options: Options) {
 	} catch {
 		return undefined;
 	}
+}
+
+async function loadLocalImage(
+	src: string,
+	url: URL,
+	options: Pick<Options, "domains" | "remotePatterns">,
+): Promise<ArrayBuffer | undefined> {
+	// TODO: should not be allowed after built?
+	// Vite uses /@fs/ to denote filesystem access, but we need to convert that to a real path to load it
+	const fsPath = src.startsWith("/@fs/");
+
+	if (fsPath) {
+		// Try loading it through Vite as a fallback, which will also respect Vite's fs rules
+		try {
+			const res = await fetch(new URL(src, url));
+
+			if (res.ok) {
+				return await res.arrayBuffer();
+			}
+		} catch {
+			return undefined;
+		}
+	} else {
+		// Otherwise, we'll assume it's a local URL and try to load it via fetch
+		const sourceUrl = new URL(src, url.origin);
+		// This is only allowed if this is the same origin
+		if (sourceUrl.origin !== url.origin) {
+			return undefined;
+		}
+		return loadRemoteImage(sourceUrl, new Headers(), options);
+	}
+
+	return undefined;
 }
 
 export interface Options {
@@ -340,25 +377,29 @@ export async function endpoint(
 
 		const isRemoteImage = isRemotePath(imageTransform.src);
 
-		if (
-			isRemoteImage &&
-			isRemoteAllowed(imageTransform.src, options) === false
-		) {
-			return new Response("Forbidden", { status: 403 });
-		}
-
 		const sourceUrl = new URL(imageTransform.src, url.origin);
 
-		// Have we been tricked into thinking this is local?
-		if (!isRemoteImage && sourceUrl.origin !== url.origin) {
-			return new Response("Forbidden", { status: 403 });
+		let inputBuffer: ArrayBuffer | undefined;
+		if (isRemoteImage) {
+			if (isRemoteAllowed(imageTransform.src, options) === false) {
+				return new Response("Forbidden", { status: 403 });
+			}
+			inputBuffer = await loadRemoteImage(
+				sourceUrl,
+				isRemoteImage ? new Headers() : request.headers,
+				options,
+			);
+		} else {
+			// Have we been tricked into thinking this is local?
+			if (sourceUrl.origin !== url.origin) {
+				return new Response("Forbidden", { status: 403 });
+			}
+			inputBuffer = await loadLocalImage(
+				removeQueryString(imageTransform.src),
+				url,
+				options,
+			);
 		}
-
-		const inputBuffer = await loadRemoteImage(
-			sourceUrl,
-			isRemoteImage ? new Headers() : request.headers,
-			options,
-		);
 
 		if (!inputBuffer) {
 			return new Response("Not Found", { status: 404 });

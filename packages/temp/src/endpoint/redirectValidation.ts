@@ -19,7 +19,7 @@ export type FetchRedirectOptions = {
 	/**
 	 * Image config for validating redirect destinations (optional)
 	 */
-	options: Options;
+	options: Pick<Options, "domains" | "remotePatterns">;
 
 	/**
 	 * Fetch function to use (default: globalThis.fetch)
