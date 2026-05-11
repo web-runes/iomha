@@ -1,5 +1,6 @@
 import netlify from "@vite-deploy/netlify";
 import { defineConfig } from "vite";
+import { iomhaPlugin } from "@iomha/temp";
 
 export default defineConfig({
 	plugins: [
@@ -10,5 +11,6 @@ export default defineConfig({
 			},
 			handlerEntrypoint: "./src/handler.ts",
 		}),
+		iomhaPlugin(),
 	],
 });
