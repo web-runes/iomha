@@ -1,5 +1,13 @@
+import * as os from "node:os";
 import MagicString from "magic-string";
+import PQueue from "p-queue";
 import type * as vite from "vite";
+import {
+	generateImagesForPath,
+	getStaticImageList,
+	getTimeStat,
+	prepareAssetsGenerationEnv,
+} from "./build/generate.js";
 import {
 	ASTRO_VITE_ENVIRONMENT_NAMES,
 	RESOLVED_VIRTUAL_GET_IMAGE_ID,
@@ -136,6 +144,8 @@ export function vitePlugin({ image }: Options): vite.Plugin[] {
 		referencedImages: new Set(),
 	};
 
+	let built = false;
+
 	return [
 		// Expose the components and different utilities from `astro:assets`
 		{
@@ -234,6 +244,123 @@ export function vitePlugin({ image }: Options): vite.Plugin[] {
 					assets: this.environment.config.build.assetsDir,
 					base: this.environment.config.base,
 				});
+			},
+
+			// Source: https://github.com/withastro/astro/blob/9446049b0d8f3245f24ddfe6eb84472481962564/packages/astro/src/core/build/generate.ts
+			async buildEnd() {
+				if (built) return;
+				const staticImageList = getStaticImageList();
+
+				if (staticImageList.size) {
+					// Default pipeline always runs
+					this.environment.logger.info("generating optimized images");
+
+					const totalCount = Array.from(staticImageList.values())
+						.map((x) => x.transforms.size)
+						.reduce((a, b) => a + b, 0);
+					const cpuCount = os.cpus().length;
+					const serverEnv = this.environment.config.environments.ssr;
+					const clientEnv = this.environment.config.environments.client;
+					const assetsCreationPipeline = await prepareAssetsGenerationEnv(
+						{
+							assets: clientEnv.build.assetsDir,
+							cacheDir: this.environment.config.cacheDir,
+							root: this.environment.config.root,
+							clientOutDir: clientEnv.build.outDir,
+							serverOutDir: serverEnv.build.outDir,
+							image,
+							logger: this.environment.logger,
+						},
+						totalCount,
+					);
+					const queue = new PQueue({ concurrency: Math.max(cpuCount, 1) });
+
+					const assetsTimer = performance.now();
+					for (const [originalPath, transforms] of staticImageList) {
+						// Process each source image in parallel based on the queue’s concurrency
+						// (`cpuCount`). Process each transform for a source image sequentially.
+						//
+						// # Design Decision:
+						// We have 3 source images (A.png, B.png, C.png) and 3 transforms for
+						// each:
+						// ```
+						// A1.png A2.png A3.png
+						// B1.png B2.png B3.png
+						// C1.png C2.png C3.png
+						// ```
+						//
+						// ## Option 1
+						// Enqueue all transforms indiscriminantly
+						// ```
+						// |_A1.png   |_B2.png   |_C1.png
+						// |_B3.png   |_A2.png   |_C3.png
+						// |_C2.png   |_A3.png   |_B1.png
+						// ```
+						// * Advantage: Maximum parallelism, saturate CPU
+						// * Disadvantage: Spike in context switching
+						//
+						// ## Option 2
+						// Enqueue all transforms, but constrain processing order by source image
+						// ```
+						// |_A3.png   |_B1.png   |_C2.png
+						// |_A1.png   |_B3.png   |_C1.png
+						// |_A2.png   |_B2.png   |_C3.png
+						// ```
+						// * Advantage: Maximum parallelism, saturate CPU (same as Option 1) in
+						//   hope to avoid context switching
+						// * Disadvantage: Context switching still occurs and performance still
+						//   suffers
+						//
+						// ## Option 3
+						// Enqueue each source image, but perform the transforms for that source
+						// image sequentially
+						// ```
+						// \_A1.png   \_B1.png   \_C1.png
+						//  \_A2.png   \_B2.png   \_C2.png
+						//   \_A3.png   \_B3.png   \_C3.png
+						// ```
+						// * Advantage: Less context switching
+						// * Disadvantage: If you have a low number of source images with high
+						//   number of transforms then this is suboptimal.
+						//
+						// ## BEST OPTION:
+						// **Option 3**. Most projects will have a higher number of source images
+						// with a few transforms on each. Even though Option 2 should be faster
+						// and _should_ prevent context switching, this was not observed in
+						// nascent tests. Context switching was high and the overall performance
+						// was half of Option 3.
+						//
+						// If looking to optimize further, please consider the following:
+						// * Avoid `queue.add()` in an async for loop. Notice the `await
+						//   queue.onIdle();` after this loop. We do not want to create a scenario
+						//   where tasks are added to the queue after the queue.onIdle() resolves.
+						//   This can break tests and create annoying race conditions.
+						// * Exposing a concurrency property in `astro.config.mjs` to allow users
+						//   to override Node’s os.cpus().length default.
+						// * Create a proper performance benchmark for asset transformations of
+						//   projects in varying sizes of source images and transforms.
+						queue
+							.add(() =>
+								generateImagesForPath(
+									originalPath,
+									transforms,
+									assetsCreationPipeline,
+								),
+							)
+							.catch((e) => {
+								throw e;
+							});
+					}
+
+					await queue.onIdle();
+					const assetsTimeEnd = performance.now();
+					this.environment.logger.info(
+						`✓ Completed in ${getTimeStat(assetsTimer, assetsTimeEnd)}.\n`,
+					);
+
+					delete globalThis?.astroAsset?.addStaticImage;
+				}
+				built = true;
 			},
 			// In build, rewrite paths to ESM imported images in code to their final location
 			async renderChunk(code) {

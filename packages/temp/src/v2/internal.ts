@@ -23,7 +23,7 @@ import {
 } from "./utils/imageKind.js";
 import { inferRemoteSize } from "./utils/remoteProbe.js";
 
-export { verifyOptions } from "./services/service.js";
+export { isLocalService, verifyOptions } from "./services/service.js";
 export const cssFitValues = [
 	"fill",
 	"contain",

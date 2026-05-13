@@ -39,14 +39,17 @@
 		"vite": "^8.0.0"
 	},
 	"devDependencies": {
+		"@types/http-cache-semantics": "^4.2.0",
 		"@types/node": "^25.6.0",
 		"@typescript/native-preview": "7.0.0-dev.20260503.1"
 	},
 	"dependencies": {
 		"@oslojs/encoding": "^1.1.0",
+		"http-cache-semantics": "^4.2.0",
 		"image-size": "^2.0.2",
 		"magic-string": "~0.30.21",
 		"mrmime": "^2.0.1",
+		"p-queue": "^9.2.0",
 		"sharp": "~0.34.5"
 	}
 }
