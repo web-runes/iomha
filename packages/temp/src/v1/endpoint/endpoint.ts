@@ -13,7 +13,7 @@ import { etag } from "./etag.js";
 import { isRemotePath, removeQueryString } from "./path.js";
 import { fetchWithRedirects } from "./redirectValidation.js";
 import { isRemoteAllowed, type RemotePattern } from "./remote.js";
-import { detector } from "../../node_modules/image-size/dist/detector.mjs";
+import { detector } from "../../../node_modules/image-size/dist/detector.mjs";
 
 async function loadRemoteImage(
 	src: URL,
