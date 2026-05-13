@@ -9,6 +9,9 @@
 		"./v1": {
 			"default": "./dist/v1/index.js"
 		},
+		"./v2": {
+			"default": "./dist/v2/index.js"
+		},
 		"./types": "./types.d.ts"
 	},
 	"files": [
@@ -40,7 +43,9 @@
 		"@typescript/native-preview": "7.0.0-dev.20260503.1"
 	},
 	"dependencies": {
+		"@oslojs/encoding": "^1.1.0",
 		"image-size": "^2.0.2",
+		"magic-string": "~0.30.21",
 		"mrmime": "^2.0.1",
 		"sharp": "~0.34.5"
 	}
