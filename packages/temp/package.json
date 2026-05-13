@@ -6,8 +6,8 @@
 	"sideEffects": false,
 	"main": "./dist/index.js",
 	"exports": {
-		".": {
-			"default": "./dist/index.js"
+		"./v1": {
+			"default": "./dist/v1/index.js"
 		},
 		"./types": "./types.d.ts"
 	},

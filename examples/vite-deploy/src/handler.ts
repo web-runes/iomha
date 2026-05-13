@@ -1,4 +1,4 @@
-import { endpoint } from "@iomha/temp";
+import { endpoint } from "@iomha/temp/v1";
 import type { ExportedHandler } from "@vite-deploy/netlify";
 import x from './test.svg'
 
