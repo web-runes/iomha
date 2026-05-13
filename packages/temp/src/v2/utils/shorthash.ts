@@ -29,7 +29,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const dictionary = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY';
+const dictionary =
+	"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY";
 const binary = dictionary.length;
 
 // refer to: http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
@@ -46,10 +47,10 @@ function bitwise(str: string) {
 
 export function shorthash(text: string): string {
 	let num: number;
-	let result = '';
+	let result = "";
 
 	let integer = bitwise(text);
-	const sign = integer < 0 ? 'Z' : ''; // If it's negative, start with Z, which isn't in the dictionary
+	const sign = integer < 0 ? "Z" : ""; // If it's negative, start with Z, which isn't in the dictionary
 
 	integer = Math.abs(integer);
 

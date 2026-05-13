@@ -51,24 +51,36 @@ export function matchProtocol(url: URL, protocol?: string): boolean {
  * @param {boolean} [allowWildcard=false] - Indicates whether wildcard patterns in the `hostname` parameter are allowed.
  * @return {boolean} - Returns `true` if the URL's hostname matches the given hostname criteria; otherwise, `false`.
  */
-export function matchHostname(url: URL, hostname?: string, allowWildcard = false): boolean {
+export function matchHostname(
+	url: URL,
+	hostname?: string,
+	allowWildcard = false,
+): boolean {
 	if (!hostname) {
 		return true;
-	} else if (!allowWildcard || !hostname.startsWith('*')) {
+	} else if (!allowWildcard || !hostname.startsWith("*")) {
 		return hostname === url.hostname;
-	} else if (hostname.startsWith('**.')) {
+	} else if (hostname.startsWith("**.")) {
 		const slicedHostname = hostname.slice(2); // ** length
-		return slicedHostname !== url.hostname && url.hostname.endsWith(slicedHostname);
-	} else if (hostname.startsWith('*.')) {
+		return (
+			slicedHostname !== url.hostname && url.hostname.endsWith(slicedHostname)
+		);
+	} else if (hostname.startsWith("*.")) {
 		const slicedHostname = hostname.slice(1); // * length
 		// Check if url hostname ends with the base domain
 		if (!url.hostname.endsWith(slicedHostname)) {
 			return false;
 		}
 		// Extract the subdomain part (before the base domain, excluding the dot)
-		const subdomainWithDot = url.hostname.slice(0, -(slicedHostname.length - 1));
+		const subdomainWithDot = url.hostname.slice(
+			0,
+			-(slicedHostname.length - 1),
+		);
 		// Should be exactly one subdomain part followed by a dot
-		return subdomainWithDot.endsWith('.') && !subdomainWithDot.slice(0, -1).includes('.');
+		return (
+			subdomainWithDot.endsWith(".") &&
+			!subdomainWithDot.slice(0, -1).includes(".")
+		);
 	}
 
 	return false;
@@ -82,22 +94,28 @@ export function matchHostname(url: URL, hostname?: string, allowWildcard = false
  * @param {boolean} [allowWildcard=false] - Determines whether wildcard matching is allowed.
  * @return {boolean} - Returns `true` if the URL's pathname matches the specified pattern; otherwise, `false`.
  */
-export function matchPathname(url: URL, pathname?: string, allowWildcard = false): boolean {
+export function matchPathname(
+	url: URL,
+	pathname?: string,
+	allowWildcard = false,
+): boolean {
 	if (!pathname) {
 		return true;
-	} else if (!allowWildcard || !pathname.endsWith('*')) {
+	} else if (!allowWildcard || !pathname.endsWith("*")) {
 		return pathname === url.pathname;
-	} else if (pathname.endsWith('/**')) {
+	} else if (pathname.endsWith("/**")) {
 		const slicedPathname = pathname.slice(0, -2); // ** length
-		return slicedPathname !== url.pathname && url.pathname.startsWith(slicedPathname);
-	} else if (pathname.endsWith('/*')) {
+		return (
+			slicedPathname !== url.pathname && url.pathname.startsWith(slicedPathname)
+		);
+	} else if (pathname.endsWith("/*")) {
 		const slicedPathname = pathname.slice(0, -1); // * length
 		if (!url.pathname.startsWith(slicedPathname)) {
 			return false;
 		}
 		const additionalPathChunks = url.pathname
 			.slice(slicedPathname.length)
-			.split('/')
+			.split("/")
 			.filter(Boolean);
 		return additionalPathChunks.length === 1;
 	}
@@ -132,7 +150,7 @@ export function isRemoteAllowed(
 	const url = new URL(src);
 
 	// Non-http(s) protocols are never allowed
-	if (!['http:', 'https:', 'data:'].includes(url.protocol)) {
+	if (!["http:", "https:", "data:"].includes(url.protocol)) {
 		return false;
 	}
 

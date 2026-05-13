@@ -2,7 +2,7 @@
  * Placeholder base URL used when creating URL objects from relative paths.
  * This avoids collisions with actual URLs (e.g., absolute asset prefixes like 'http://localhost:4321')
  */
-const PLACEHOLDER_BASE = 'astro://placeholder';
+const PLACEHOLDER_BASE = "astro://placeholder";
 
 /**
  * Creates a URL object from a path or URL string, using a placeholder base for relative paths.
@@ -23,5 +23,5 @@ export function createPlaceholderURL(pathOrUrl: string): URL {
  * @returns The URL string without the placeholder base
  */
 export function stringifyPlaceholderURL(url: URL): string {
-	return url.href.replace(PLACEHOLDER_BASE, '');
+	return url.href.replace(PLACEHOLDER_BASE, "");
 }

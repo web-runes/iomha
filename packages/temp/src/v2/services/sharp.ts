@@ -8,12 +8,12 @@ import type {
 	SharpOptions,
 	WebpOptions,
 } from "sharp";
+import { detector } from "../../../node_modules/image-size/dist/detector.mjs";
 import type {
 	ImageFit,
 	ImageOutputFormat,
 	ImageQualityPreset,
 } from "../types.js";
-import { detector } from "../../../node_modules/image-size/dist/detector.mjs";
 import {
 	type BaseServiceTransform,
 	baseService,

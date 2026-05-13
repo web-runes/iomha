@@ -9,11 +9,13 @@
 
 const objConstructorString = Function.prototype.toString.call(Object);
 
-function isPlainObject(value: unknown): value is Record<string | symbol, unknown> {
+function isPlainObject(
+	value: unknown,
+): value is Record<string | symbol, unknown> {
 	if (
-		typeof value !== 'object' ||
+		typeof value !== "object" ||
 		value === null ||
-		Object.prototype.toString.call(value) !== '[object Object]'
+		Object.prototype.toString.call(value) !== "[object Object]"
 	) {
 		return false;
 	}
@@ -21,11 +23,11 @@ function isPlainObject(value: unknown): value is Record<string | symbol, unknown
 	if (proto === null) {
 		return true;
 	}
-	if (!Object.prototype.hasOwnProperty.call(proto, 'constructor')) {
+	if (!Object.hasOwn(proto, "constructor")) {
 		return false;
 	}
 	return (
-		typeof proto.constructor === 'function' &&
+		typeof proto.constructor === "function" &&
 		proto.constructor instanceof proto.constructor &&
 		Function.prototype.toString.call(proto.constructor) === objConstructorString
 	);
@@ -33,19 +35,19 @@ function isPlainObject(value: unknown): value is Record<string | symbol, unknown
 
 /** Recursively serializes any JS value into a deterministic string. */
 export function deterministicString(input: unknown): string {
-	if (typeof input === 'string') {
+	if (typeof input === "string") {
 		return JSON.stringify(input);
-	} else if (typeof input === 'symbol' || typeof input === 'function') {
+	} else if (typeof input === "symbol" || typeof input === "function") {
 		return input.toString();
-	} else if (typeof input === 'bigint') {
+	} else if (typeof input === "bigint") {
 		return `${input}n`;
 	} else if (
 		input === globalThis ||
 		input === undefined ||
 		input === null ||
-		typeof input === 'boolean' ||
-		typeof input === 'number' ||
-		typeof input !== 'object'
+		typeof input === "boolean" ||
+		typeof input === "number" ||
+		typeof input !== "object"
 	) {
 		return `${input}`;
 	} else if (input instanceof Date) {
@@ -62,7 +64,7 @@ export function deterministicString(input: unknown): string {
 		for (const val of input.values()) {
 			ret += `${deterministicString(val)},`;
 		}
-		ret += '])';
+		ret += "])";
 		return ret;
 	} else if (
 		Array.isArray(input) ||
@@ -82,9 +84,12 @@ export function deterministicString(input: unknown): string {
 		for (const [k, v] of input.entries()) {
 			ret += `(${k}:${deterministicString(v)}),`;
 		}
-		ret += '])';
+		ret += "])";
 		return ret;
-	} else if (input instanceof ArrayBuffer || input instanceof SharedArrayBuffer) {
+	} else if (
+		input instanceof ArrayBuffer ||
+		input instanceof SharedArrayBuffer
+	) {
 		if (input.byteLength % 8 === 0) {
 			return deterministicString(new BigUint64Array(input));
 		} else if (input.byteLength % 4 === 0) {
@@ -92,16 +97,17 @@ export function deterministicString(input: unknown): string {
 		} else if (input.byteLength % 2 === 0) {
 			return deterministicString(new Uint16Array(input));
 		} else {
-			let ret = '(';
+			let ret = "(";
 			for (let i = 0; i < input.byteLength; i++) {
 				ret += `${deterministicString(new Uint8Array(input.slice(i, i + 1)))},`;
 			}
-			ret += ')';
+			ret += ")";
 			return ret;
 		}
 	} else if (input instanceof Map || isPlainObject(input)) {
 		const sortable: [string, string][] = [];
-		const entries = input instanceof Map ? input.entries() : Object.entries(input);
+		const entries =
+			input instanceof Map ? input.entries() : Object.entries(input);
 		for (const [k, v] of entries) {
 			sortable.push([deterministicString(k), deterministicString(v)]);
 		}
@@ -110,8 +116,10 @@ export function deterministicString(input: unknown): string {
 			// eslint-disable-next-line @typescript-eslint/prefer-for-of
 			for (let i = 0; i < symbolKeys.length; i++) {
 				sortable.push([
-					deterministicString(symbolKeys[i]!),
-					deterministicString((input as Record<symbol, unknown>)[symbolKeys[i]!]),
+					deterministicString(symbolKeys[i]),
+					deterministicString(
+						(input as Record<symbol, unknown>)[symbolKeys[i]],
+					),
 				]);
 			}
 		}
@@ -120,7 +128,7 @@ export function deterministicString(input: unknown): string {
 		for (const [k, v] of sortable) {
 			ret += `(${k}:${v}),`;
 		}
-		ret += '])';
+		ret += "])";
 		return ret;
 	}
 
@@ -135,8 +143,8 @@ export function deterministicString(input: unknown): string {
 	// eslint-disable-next-line @typescript-eslint/prefer-for-of
 	for (let i = 0; i < symbolKeys.length; i++) {
 		allEntries.push([
-			deterministicString(symbolKeys[i]!),
-			deterministicString((input as Record<symbol, unknown>)[symbolKeys[i]!]),
+			deterministicString(symbolKeys[i]),
+			deterministicString((input as Record<symbol, unknown>)[symbolKeys[i]]),
 		]);
 	}
 	allEntries.sort(([a], [b]) => a.localeCompare(b));
@@ -144,6 +152,6 @@ export function deterministicString(input: unknown): string {
 	for (const [k, v] of allEntries) {
 		ret += `(${k}:${v}),`;
 	}
-	ret += '])';
+	ret += "])";
 	return ret;
 }

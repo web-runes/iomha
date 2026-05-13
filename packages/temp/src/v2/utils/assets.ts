@@ -1,7 +1,7 @@
-import type { Environment, Rollup } from 'vite';
+import type { Environment, Rollup } from "vite";
 
 type PluginContext = Rollup.PluginContext;
-type EmitFileOptions = Parameters<Rollup.PluginContext['emitFile']>[0];
+type EmitFileOptions = Parameters<Rollup.PluginContext["emitFile"]>[0];
 
 // WeakMap keyed by Environment objects to track emitted asset handles
 // Using WeakMap ensures automatic cleanup when environments are garbage collected
@@ -36,8 +36,12 @@ export function resetHandles(env: Environment): void {
  * with content entry types, but in practice it will always have the `environment`
  * property when running in Vite.
  */
-export function emitClientAsset(pluginContext: PluginContext, options: EmitFileOptions): string {
-	const env = (pluginContext as PluginContext & { environment: Environment }).environment;
+export function emitClientAsset(
+	pluginContext: PluginContext,
+	options: EmitFileOptions,
+): string {
+	const env = (pluginContext as PluginContext & { environment: Environment })
+		.environment;
 	const handle = pluginContext.emitFile(options);
 
 	const handles = getHandles(env);

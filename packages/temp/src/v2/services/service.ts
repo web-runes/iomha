@@ -1,29 +1,35 @@
-import { isRemoteAllowed } from '../internal-helpers/remote.js';
-import { isRemotePath, joinPaths } from '../internal-helpers/path.js';
-import { DEFAULT_HASH_PROPS, DEFAULT_OUTPUT_FORMAT, VALID_SUPPORTED_FORMATS } from '../consts.js';
+import {
+	DEFAULT_HASH_PROPS,
+	DEFAULT_OUTPUT_FORMAT,
+	VALID_SUPPORTED_FORMATS,
+} from "../consts.js";
+import { isRemotePath, joinPaths } from "../internal-helpers/path.js";
+import { isRemoteAllowed } from "../internal-helpers/remote.js";
 import type {
-    ResolvedImageConfig,
 	ImageFit,
 	ImageMetadata,
 	ImageOutputFormat,
 	ImageTransform,
+	ResolvedImageConfig,
 	UnresolvedSrcSetValue,
-} from '../types.js';
-import { isESMImportedImage, isRemoteImage } from '../utils/imageKind.js';
-import { inferRemoteSize } from '../utils/remoteProbe.js';
+} from "../types.js";
+import { isESMImportedImage, isRemoteImage } from "../utils/imageKind.js";
+import { inferRemoteSize } from "../utils/remoteProbe.js";
 
 export type ImageService = LocalImageService | ExternalImageService;
 
-export function isLocalService(service: ImageService | undefined): service is LocalImageService {
+export function isLocalService(
+	service: ImageService | undefined,
+): service is LocalImageService {
 	if (!service) {
 		return false;
 	}
 
-	return 'transform' in service;
+	return "transform" in service;
 }
 
 export function parseQuality(quality: string): string | number {
-	let result = Number.parseInt(quality);
+	const result = Number.parseInt(quality, 10);
 	if (Number.isNaN(result)) {
 		return quality;
 	}
@@ -36,7 +42,9 @@ type ImageConfig<T> = Omit<ResolvedImageConfig, "service"> & {
 	assetQueryParams?: URLSearchParams;
 };
 
-interface SharedServiceProps<T extends Record<string, any> = Record<string, any>> {
+interface SharedServiceProps<
+	T extends Record<string, any> = Record<string, any>,
+> {
 	/**
 	 * Return the URL to the endpoint or URL your images are generated from.
 	 *
@@ -45,7 +53,10 @@ interface SharedServiceProps<T extends Record<string, any> = Record<string, any>
 	 * For external services, this should point to the URL your images are coming from, for instance, `/_vercel/image`
 	 *
 	 */
-	getURL: (options: ImageTransform, imageConfig: ImageConfig<T>) => string | Promise<string>;
+	getURL: (
+		options: ImageTransform,
+		imageConfig: ImageConfig<T>,
+	) => string | Promise<string>;
 	/**
 	 * Generate additional `srcset` values for the image.
 	 *
@@ -87,19 +98,23 @@ interface SharedServiceProps<T extends Record<string, any> = Record<string, any>
 	getRemoteSize?: (
 		url: string,
 		imageConfig: ImageConfig<T>,
-	) => Omit<ImageMetadata, 'src' | 'fsPath'> | Promise<Omit<ImageMetadata, 'src' | 'fsPath'>>;
+	) =>
+		| Omit<ImageMetadata, "src" | "fsPath">
+		| Promise<Omit<ImageMetadata, "src" | "fsPath">>;
 }
 
-export type ExternalImageService<T extends Record<string, any> = Record<string, any>> =
-	SharedServiceProps<T>;
+export type ExternalImageService<
+	T extends Record<string, any> = Record<string, any>,
+> = SharedServiceProps<T>;
 
 type LocalImageTransform = {
 	src: string;
 	[key: string]: any;
 };
 
-export interface LocalImageService<T extends Record<string, any> = Record<string, any>>
-	extends SharedServiceProps<T> {
+export interface LocalImageService<
+	T extends Record<string, any> = Record<string, any>,
+> extends SharedServiceProps<T> {
 	/**
 	 * Parse the requested parameters passed in the URL from `getURL` back into an object to be used later by `transform`.
 	 *
@@ -108,7 +123,11 @@ export interface LocalImageService<T extends Record<string, any> = Record<string
 	parseURL: (
 		url: URL,
 		imageConfig: ImageConfig<T>,
-	) => LocalImageTransform | undefined | Promise<LocalImageTransform> | Promise<undefined>;
+	) =>
+		| LocalImageTransform
+		| undefined
+		| Promise<LocalImageTransform>
+		| Promise<undefined>;
 	/**
 	 * Performs the image transformations on the input image and returns both the binary data and
 	 * final image format of the optimized image.
@@ -142,27 +161,30 @@ const sortNumeric = (a: number, b: number) => a - b;
 
 export function verifyOptions(options: ImageTransform): void {
 	// `src` is missing or is `undefined`.
-	if (!options.src || (!isRemoteImage(options.src) && !isESMImportedImage(options.src))) {
+	if (
+		!options.src ||
+		(!isRemoteImage(options.src) && !isESMImportedImage(options.src))
+	) {
 		throw new Error("Expected src to be an image.");
 	}
 
 	if (!isESMImportedImage(options.src)) {
 		// User passed an `/@fs/` path or a filesystem path instead of the full image.
 		if (
-			options.src.startsWith('/@fs/') ||
-			(!isRemotePath(options.src) && !options.src.startsWith('/'))
+			options.src.startsWith("/@fs/") ||
+			(!isRemotePath(options.src) && !options.src.startsWith("/"))
 		) {
 			throw new Error("Local images must be imported.");
 		}
 
 		// For remote images, width and height are explicitly required as we can't infer them from the file
-		let missingDimension: 'width' | 'height' | 'both' | undefined;
+		let missingDimension: "width" | "height" | "both" | undefined;
 		if (!options.width && !options.height) {
-			missingDimension = 'both';
+			missingDimension = "both";
 		} else if (!options.width && options.height) {
-			missingDimension = 'width';
+			missingDimension = "width";
 		} else if (options.width && !options.height) {
-			missingDimension = 'height';
+			missingDimension = "height";
 		}
 
 		if (missingDimension) {
@@ -177,7 +199,7 @@ export function verifyOptions(options: ImageTransform): void {
 			throw new Error("Cannot set both `densities` and `widths`");
 		}
 
-		if (options.src.format !== 'svg' && options.format === 'svg') {
+		if (options.src.format !== "svg" && options.format === "svg") {
 			throw new Error("Unsupported image conversion");
 		}
 	}
@@ -202,7 +224,7 @@ export function verifyOptions(options: ImageTransform): void {
  * - For remote images, `width` and `height` are always required.
  *
  */
-export const baseService: Omit<LocalImageService, 'transform'> = {
+export const baseService: Omit<LocalImageService, "transform"> = {
 	propertiesToHash: DEFAULT_HASH_PROPS,
 	validateOptions(options) {
 		// Run verification-only checks
@@ -210,8 +232,8 @@ export const baseService: Omit<LocalImageService, 'transform'> = {
 
 		// Apply defaults and normalization separate from verification
 		if (!options.format) {
-			if (isESMImportedImage(options.src) && options.src.format === 'svg') {
-				options.format = 'svg';
+			if (isESMImportedImage(options.src) && options.src.format === "svg") {
+				options.format = "svg";
 			} else {
 				options.format = DEFAULT_OUTPUT_FORMAT;
 			}
@@ -221,7 +243,7 @@ export const baseService: Omit<LocalImageService, 'transform'> = {
 		if (options.layout) {
 			delete options.layout;
 		}
-		if (options.fit === 'none') {
+		if (options.fit === "none") {
 			delete options.fit;
 		}
 		return options;
@@ -248,8 +270,8 @@ export const baseService: Omit<LocalImageService, 'transform'> = {
 			...attributes,
 			width: targetWidth,
 			height: targetHeight,
-			loading: attributes.loading ?? 'lazy',
-			decoding: attributes.decoding ?? 'async',
+			loading: attributes.loading ?? "lazy",
+			decoding: attributes.decoding ?? "async",
 		};
 	},
 	getSrcSet(options): Array<UnresolvedSrcSetValue> {
@@ -271,8 +293,14 @@ export const baseService: Omit<LocalImageService, 'transform'> = {
 			maxWidth = imageWidth;
 
 			// We've already sorted the widths, so we'll remove any that are larger than the original image's width
-			if (transformedWidths.length > 0 && transformedWidths.at(-1)! > maxWidth) {
-				transformedWidths = transformedWidths.filter((width) => width <= maxWidth);
+			if (
+				transformedWidths.length > 0 &&
+				// biome-ignore lint/style/noNonNullAssertion: it's fine
+				transformedWidths.at(-1)! > maxWidth
+			) {
+				transformedWidths = transformedWidths.filter(
+					(width) => width <= maxWidth,
+				);
 				// If we've had to remove some widths, we'll add the maximum width back in
 				transformedWidths.push(maxWidth);
 			}
@@ -297,7 +325,7 @@ export const baseService: Omit<LocalImageService, 'transform'> = {
 		if (densities) {
 			// Densities can either be specified as numbers, or descriptors (ex: '1x'), we'll convert them all to numbers
 			const densityValues = densities.map((density) => {
-				if (typeof density === 'number') {
+				if (typeof density === "number") {
 					return density;
 				} else {
 					return Number.parseFloat(density);
@@ -336,36 +364,39 @@ export const baseService: Omit<LocalImageService, 'transform'> = {
 		const searchParams = new URLSearchParams();
 
 		if (isESMImportedImage(options.src)) {
-			searchParams.append('href', options.src.src);
+			searchParams.append("href", options.src.src);
 		} else if (isRemoteAllowed(options.src, imageConfig)) {
-			searchParams.append('href', options.src);
+			searchParams.append("href", options.src);
 		} else {
 			// If it's not an imported image, nor is it allowed using the current domains or remote patterns, we'll just return the original URL
 			return options.src;
 		}
 
 		const params: Record<string, keyof typeof options> = {
-			w: 'width',
-			h: 'height',
-			q: 'quality',
-			f: 'format',
-			fit: 'fit',
-			position: 'position',
-			background: 'background',
+			w: "width",
+			h: "height",
+			q: "quality",
+			f: "format",
+			fit: "fit",
+			position: "position",
+			background: "background",
 		};
 
 		Object.entries(params).forEach(([param, key]) => {
 			options[key] && searchParams.append(param, options[key].toString());
 		});
 
-		const imageEndpoint = joinPaths(import.meta.env.BASE_URL, imageConfig.endpoint.route);
+		const imageEndpoint = joinPaths(
+			import.meta.env.BASE_URL,
+			imageConfig.endpoint.route,
+		);
 		let url = `${imageEndpoint}?${searchParams}`;
 
 		// Append assetQueryParams if available (for adapter-level tracking like skew protection)
 		if (imageConfig.assetQueryParams) {
 			const assetQueryString = imageConfig.assetQueryParams.toString();
 			if (assetQueryString) {
-				url += '&' + assetQueryString;
+				url += `&${assetQueryString}`;
 			}
 		}
 
@@ -374,19 +405,26 @@ export const baseService: Omit<LocalImageService, 'transform'> = {
 	parseURL(url) {
 		const params = url.searchParams;
 
-		if (!params.has('href')) {
+		if (!params.has("href")) {
 			return undefined;
 		}
 
 		const transform: BaseServiceTransform = {
-			src: params.get('href')!,
-			width: params.has('w') ? Number.parseInt(params.get('w')!) : undefined,
-			height: params.has('h') ? Number.parseInt(params.get('h')!) : undefined,
-			format: params.get('f') as ImageOutputFormat,
-			quality: params.get('q'),
-			fit: params.get('fit') as ImageFit,
-			position: params.get('position') ?? undefined,
-			background: params.get('background') ?? undefined,
+			// biome-ignore lint/style/noNonNullAssertion: it's fine
+			src: params.get("href")!,
+			width: params.has("w")
+				? // biome-ignore lint/style/noNonNullAssertion: it's fine
+					Number.parseInt(params.get("w")!, 10)
+				: undefined,
+			height: params.has("h")
+				? // biome-ignore lint/style/noNonNullAssertion: it's fine
+					Number.parseInt(params.get("h")!, 10)
+				: undefined,
+			format: params.get("f") as ImageOutputFormat,
+			quality: params.get("q"),
+			fit: params.get("fit") as ImageFit,
+			position: params.get("position") ?? undefined,
+			background: params.get("background") ?? undefined,
 		};
 
 		return transform;
@@ -427,7 +465,9 @@ function getTargetDimensions(options: ImageTransform) {
 
 	// TypeScript doesn't know this, but because of previous hooks we always know that targetWidth and targetHeight are defined
 	return {
+		// biome-ignore lint/style/noNonNullAssertion: it's fine
 		targetWidth: targetWidth!,
+		// biome-ignore lint/style/noNonNullAssertion: it's fine
 		targetHeight: targetHeight!,
 	};
 }

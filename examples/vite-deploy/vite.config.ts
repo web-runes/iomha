@@ -1,6 +1,6 @@
+import { iomhaPlugin } from "@iomha/temp/v1";
 import netlify from "@vite-deploy/netlify";
 import { defineConfig } from "vite";
-import { iomhaPlugin } from "@iomha/temp/v1";
 
 export default defineConfig({
 	plugins: [

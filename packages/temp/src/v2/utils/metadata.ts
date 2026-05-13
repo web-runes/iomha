@@ -1,5 +1,5 @@
-import type { ImageInputFormat, ImageMetadata } from '../types.js';
 import { imageSize as probe } from "image-size";
+import type { ImageInputFormat, ImageMetadata } from "../types.js";
 
 /**
  * Extracts image metadata such as dimensions, format, and orientation from the provided image data.
@@ -12,15 +12,15 @@ import { imageSize as probe } from "image-size";
 export async function imageMetadata(
 	data: Uint8Array,
 	_src?: string,
-): Promise<Omit<ImageMetadata, 'src' | 'fsPath'>> {
+): Promise<Omit<ImageMetadata, "src" | "fsPath">> {
 	let result: any;
 	try {
 		result = probe(data);
 	} catch {
-		throw new Error('Could not process image metadata.')
+		throw new Error("Could not process image metadata.");
 	}
 	if (!result.height || !result.width || !result.type) {
-		throw new Error('Could not process image metadata.')
+		throw new Error("Could not process image metadata.");
 	}
 
 	const { width, height, type, orientation } = result;

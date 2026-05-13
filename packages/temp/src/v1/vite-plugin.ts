@@ -1,6 +1,6 @@
+import type { AddressInfo } from "node:net";
 import type { Plugin } from "vite";
 import { removeQueryString } from "./endpoint/path.js";
-import type { AddressInfo } from "node:net";
 
 // TODO: proper ts types for consumers
 const VALID_INPUT_FORMATS = [

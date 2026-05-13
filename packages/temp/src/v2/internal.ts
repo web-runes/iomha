@@ -1,13 +1,13 @@
-import { isRemotePath } from './internal-helpers/path.js';
-import { isRemoteAllowed } from './internal-helpers/remote.js';
-import { DEFAULT_HASH_PROPS } from './consts.js';
+import { DEFAULT_HASH_PROPS } from "./consts.js";
+import { isRemotePath } from "./internal-helpers/path.js";
+import { isRemoteAllowed } from "./internal-helpers/remote.js";
 import {
 	DEFAULT_RESOLUTIONS,
 	getSizesAttribute,
 	getWidths,
 	LIMITED_RESOLUTIONS,
-} from './layout.js';
-import { type ImageService, isLocalService } from './services/service.js';
+} from "./layout.js";
+import { type ImageService, isLocalService } from "./services/service.js";
 import {
 	type GetImageResult,
 	type ImageTransform,
@@ -15,18 +15,28 @@ import {
 	type ResolvedImageConfig,
 	type SrcSetValue,
 	type UnresolvedImageTransform,
-} from './types.js';
-import { isESMImportedImage, isRemoteImage, resolveSrc } from './utils/imageKind.js';
-import { inferRemoteSize } from './utils/remoteProbe.js';
+} from "./types.js";
+import {
+	isESMImportedImage,
+	isRemoteImage,
+	resolveSrc,
+} from "./utils/imageKind.js";
+import { inferRemoteSize } from "./utils/remoteProbe.js";
 
-export { verifyOptions } from './services/service.js';
-export const cssFitValues = ['fill', 'contain', 'cover', 'scale-down', 'none'] as const;
+export { verifyOptions } from "./services/service.js";
+export const cssFitValues = [
+	"fill",
+	"contain",
+	"cover",
+	"scale-down",
+	"none",
+] as const;
 
 export async function getConfiguredImageService(): Promise<ImageService> {
 	if (!globalThis?.astroAsset?.imageService) {
 		const { default: service }: { default: ImageService } = await import(
 			// @ts-expect-error
-			'virtual:image-service'
+			"virtual:image-service"
 		).catch((e) => {
 			const error = new Error("Error while loading image service.");
 			error.cause = e;
@@ -45,10 +55,10 @@ export async function getImage(
 	options: UnresolvedImageTransform,
 	imageConfig: ResolvedImageConfig,
 ): Promise<GetImageResult> {
-	if (!options || typeof options !== 'object') {
+	if (!options || typeof options !== "object") {
 		throw new Error("Expected image options.");
 	}
-	if (typeof options.src === 'undefined') {
+	if (typeof options.src === "undefined") {
 		throw new Error("Expected src to be an image.");
 	}
 
@@ -71,13 +81,17 @@ export async function getImage(
 	if (resolvedOptions.inferSize) {
 		delete resolvedOptions.inferSize; // Delete so it doesn't end up in the attributes
 
-		if (isRemoteImage(resolvedOptions.src) && isRemotePath(resolvedOptions.src)) {
+		if (
+			isRemoteImage(resolvedOptions.src) &&
+			isRemotePath(resolvedOptions.src)
+		) {
 			if (!isRemoteAllowed(resolvedOptions.src, imageConfig)) {
 				throw new Error("Remote image is not allowed");
 			}
 
 			const getRemoteSize = (url: string) =>
-				service.getRemoteSize?.(url, imageConfig) ?? inferRemoteSize(url, imageConfig);
+				service.getRemoteSize?.(url, imageConfig) ??
+				inferRemoteSize(url, imageConfig);
 			const result = await getRemoteSize(resolvedOptions.src); // Directly probe the image URL
 			resolvedOptions.width ??= result.width;
 			resolvedOptions.height ??= result.height;
@@ -116,21 +130,21 @@ export async function getImage(
 	}
 	resolvedOptions.src = clonedSrc;
 
-	const layout = options.layout ?? imageConfig.layout ?? 'none';
+	const layout = options.layout ?? imageConfig.layout ?? "none";
 
 	if (resolvedOptions.priority) {
-		resolvedOptions.loading ??= 'eager';
-		resolvedOptions.decoding ??= 'sync';
-		resolvedOptions.fetchpriority ??= 'high';
+		resolvedOptions.loading ??= "eager";
+		resolvedOptions.decoding ??= "sync";
+		resolvedOptions.fetchpriority ??= "high";
 		delete resolvedOptions.priority;
 	} else {
-		resolvedOptions.loading ??= 'lazy';
-		resolvedOptions.decoding ??= 'async';
+		resolvedOptions.loading ??= "lazy";
+		resolvedOptions.decoding ??= "async";
 		// Omit fetchpriority to use the default `"auto"` value
 		resolvedOptions.fetchpriority ??= undefined;
 	}
 
-	if (layout !== 'none') {
+	if (layout !== "none") {
 		resolvedOptions.widths ||= getWidths({
 			width: resolvedOptions.width,
 			layout,
@@ -141,29 +155,38 @@ export async function getImage(
 					? LIMITED_RESOLUTIONS
 					: DEFAULT_RESOLUTIONS,
 		});
-		resolvedOptions.sizes ||= getSizesAttribute({ width: resolvedOptions.width, layout });
+		resolvedOptions.sizes ||= getSizesAttribute({
+			width: resolvedOptions.width,
+			layout,
+		});
 		// The densities option is incompatible with the `layout` option
 		delete resolvedOptions.densities;
 
 		// Set data attribute for layout
-		resolvedOptions['data-astro-image'] = layout;
+		resolvedOptions["data-astro-image"] = layout;
 
 		// Set data attributes for fit and position for CSP-compliant styling
 		if (resolvedOptions.fit && cssFitValues.includes(resolvedOptions.fit)) {
-			resolvedOptions['data-astro-image-fit'] = resolvedOptions.fit;
+			resolvedOptions["data-astro-image-fit"] = resolvedOptions.fit;
 		}
 
 		// Always output 'data-astro-image-pos', defaulting to 'center' if unspecified.
 		// This ensures compatibility with existing CSP tests and allows consistent CSS control.
-		const currentPosition = resolvedOptions.position || 'center';
-		resolvedOptions['data-astro-image-pos'] = currentPosition.replace(/\s+/g, '-');
+		const currentPosition = resolvedOptions.position || "center";
+		resolvedOptions["data-astro-image-pos"] = currentPosition.replace(
+			/\s+/g,
+			"-",
+		);
 
 		if (resolvedOptions.position) {
 			// Normalize position value for data attribute (spaces to dashes)
 			// Apply object-position as inline style since position values are arbitrary
 			// and cannot be pre-enumerated in a static stylesheet like fit values can.
-			if (typeof resolvedOptions.style === 'object' && resolvedOptions.style !== null) {
-				if (!('objectPosition' in resolvedOptions.style)) {
+			if (
+				typeof resolvedOptions.style === "object" &&
+				resolvedOptions.style !== null
+			) {
+				if (!("objectPosition" in resolvedOptions.style)) {
 					resolvedOptions.style = {
 						...resolvedOptions.style,
 						objectPosition: resolvedOptions.position,
@@ -171,11 +194,13 @@ export async function getImage(
 				}
 			} else {
 				const existingStyle =
-					typeof resolvedOptions.style === 'string' ? resolvedOptions.style : '';
-				if (!existingStyle.includes('object-position')) {
+					typeof resolvedOptions.style === "string"
+						? resolvedOptions.style
+						: "";
+				if (!existingStyle.includes("object-position")) {
 					const positionStyle = `object-position: ${resolvedOptions.position}`;
 					resolvedOptions.style = existingStyle
-						? existingStyle.replace(/;?\s*$/, '; ') + positionStyle
+						? existingStyle.replace(/;?\s*$/, "; ") + positionStyle
 						: positionStyle;
 				}
 			}
@@ -222,18 +247,31 @@ export async function getImage(
 	if (
 		isLocalService(service) &&
 		globalThis.astroAsset.addStaticImage &&
-		!(isRemoteImage(validatedOptions.src) && initialImageURL === validatedOptions.src)
+		!(
+			isRemoteImage(validatedOptions.src) &&
+			initialImageURL === validatedOptions.src
+		)
 	) {
 		const propsToHash = service.propertiesToHash ?? DEFAULT_HASH_PROPS;
 		lazyImageURL = lazyImageURLFactory(() =>
-			globalThis.astroAsset.addStaticImage!(validatedOptions, propsToHash, originalFilePath),
+			// biome-ignore lint/style/noNonNullAssertion: it's fine
+			globalThis.astroAsset.addStaticImage!(
+				validatedOptions,
+				propsToHash,
+				originalFilePath,
+			),
 		);
 		srcSets = srcSetTransforms.map((srcSet) => {
 			return {
 				transform: srcSet.transform,
 				url: matchesValidatedTransform(srcSet.transform)
 					? lazyImageURL()
-					: globalThis.astroAsset.addStaticImage!(srcSet.transform, propsToHash, originalFilePath),
+					: // biome-ignore lint/style/noNonNullAssertion: it's fine
+						globalThis.astroAsset.addStaticImage!(
+							srcSet.transform,
+							propsToHash,
+							originalFilePath,
+						),
 				descriptor: srcSet.descriptor,
 				attributes: srcSet.attributes,
 			};
@@ -248,7 +286,9 @@ export async function getImage(
 		},
 		srcSet: {
 			values: srcSets,
-			attribute: srcSets.map((srcSet) => `${srcSet.url} ${srcSet.descriptor}`).join(', '),
+			attribute: srcSets
+				.map((srcSet) => `${srcSet.url} ${srcSet.descriptor}`)
+				.join(", "),
 		},
 		attributes:
 			service.getHTMLAttributes !== undefined

@@ -1,4 +1,4 @@
-import type { ImageMetadata } from '../types.js';
+import type { ImageMetadata } from "../types.js";
 
 export function getProxyCode(options: ImageMetadata, isSSR: boolean): string {
 	const stringifiedFSPath = JSON.stringify(options.fsPath);
@@ -14,7 +14,7 @@ export function getProxyCode(options: ImageMetadata, isSSR: boolean): string {
 							${
 								!isSSR
 									? `if (target[name] !== undefined && globalThis.astroAsset) globalThis.astroAsset?.referencedImages?.add(${stringifiedFSPath});`
-									: ''
+									: ""
 							}
 							return target[name];
 						}

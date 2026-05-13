@@ -1,15 +1,7 @@
 import MagicString from "magic-string";
 import type * as vite from "vite";
 import {
-	appendForwardSlash,
-	joinPaths,
-	prependForwardSlash,
-	removeBase,
-	removeQueryString,
-} from "./internal-helpers/path.js";
-import { normalizePath } from "./utils/viteUtils.js";
-import { ASTRO_VITE_ENVIRONMENT_NAMES } from "./consts.js";
-import {
+	ASTRO_VITE_ENVIRONMENT_NAMES,
 	RESOLVED_VIRTUAL_GET_IMAGE_ID,
 	RESOLVED_VIRTUAL_IMAGE_STYLES_ID,
 	RESOLVED_VIRTUAL_MODULE_ID,
@@ -19,13 +11,21 @@ import {
 	VIRTUAL_MODULE_ID,
 	VIRTUAL_SERVICE_ID,
 } from "./consts.js";
+import {
+	appendForwardSlash,
+	joinPaths,
+	prependForwardSlash,
+	removeBase,
+	removeQueryString,
+} from "./internal-helpers/path.js";
 import type { ImageTransform, ResolvedImageConfig } from "./types.js";
-import { isESMImportedImage } from "./utils/imageKind.js";
 import { emitClientAsset } from "./utils/assets.js";
 import { hashTransform, propsToFilename } from "./utils/hash.js";
+import { isESMImportedImage } from "./utils/imageKind.js";
 import { emitImageMetadata } from "./utils/node.js";
 import { getProxyCode } from "./utils/proxy.js";
 import { createPlaceholderURL, stringifyPlaceholderURL } from "./utils/url.js";
+import { normalizePath } from "./utils/viteUtils.js";
 
 function isAstroServerEnvironment(environment: vite.Environment) {
 	return (
@@ -96,12 +96,14 @@ const addStaticImageFactory = (settings: {
 			);
 
 			if (!transformsForPath) {
-				globalThis.astroAsset.staticImages.set(finalOriginalPath, {
+				transformsForPath = {
 					originalSrcPath: originalFSPath,
 					transforms: new Map(),
-				});
-				transformsForPath =
-					globalThis.astroAsset.staticImages.get(finalOriginalPath)!;
+				};
+				globalThis.astroAsset.staticImages.set(
+					finalOriginalPath,
+					transformsForPath,
+				);
 			}
 
 			transformsForPath.transforms.set(hash, {
@@ -152,7 +154,9 @@ export function vitePlugin({ image }: Options): vite.Plugin[] {
 						if (isAstroServerEnvironment(this.environment)) {
 							return await this.resolve(image.service.entrypoint);
 						}
-						return await this.resolve(new URL("./services/noop.js", import.meta.url).href);
+						return await this.resolve(
+							new URL("./services/noop.js", import.meta.url).href,
+						);
 					}
 					if (id === VIRTUAL_MODULE_ID) {
 						return RESOLVED_VIRTUAL_MODULE_ID;
@@ -237,9 +241,9 @@ export function vitePlugin({ image }: Options): vite.Plugin[] {
 
 				let match: RegExpExecArray | null;
 				let s: MagicString | undefined;
-				// biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
+				// biome-ignore lint/suspicious/noAssignInExpressions: it's fine
 				while ((match = assetUrlRE.exec(code))) {
-					// biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
+					// biome-ignore lint/suspicious/noAssignInExpressions: it's fine
 					s = s || (s = new MagicString(code));
 					const [full, hash, postfix = ""] = match;
 

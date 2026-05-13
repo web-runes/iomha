@@ -1,9 +1,8 @@
 import { endpoint } from "@iomha/temp/v1";
 import type { ExportedHandler } from "@vite-deploy/netlify";
-import x from './test.svg'
+import x from "./test.svg";
 
-console.log({ x })
-
+console.log({ x });
 
 export default {
 	async fetch(request) {

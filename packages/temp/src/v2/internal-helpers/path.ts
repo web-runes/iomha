@@ -4,15 +4,15 @@
  */
 
 export function appendExtension(path: string, extension: string): string {
-	return path + "." + extension;
+	return `${path}.${extension}`;
 }
 
 export function appendForwardSlash(path: string): string {
-	return path.endsWith("/") ? path : path + "/";
+	return path.endsWith("/") ? path : `${path}/`;
 }
 
 export function prependForwardSlash(path: string): string {
-	return path[0] === "/" ? path : "/" + path;
+	return path[0] === "/" ? path : `/${path}`;
 }
 
 export const MANY_LEADING_SLASHES: RegExp = /^\/{2,}/;
@@ -245,7 +245,7 @@ export function isParentDirectory(
 	// Don't allow same path (parent can't be parent of itself)
 	if (
 		normalizedParent === normalizedChild ||
-		normalizedParent === normalizedChild + "/"
+		normalizedParent === `${normalizedChild}/`
 	) {
 		return false;
 	}
@@ -253,21 +253,21 @@ export function isParentDirectory(
 	return normalizedChild.startsWith(normalizedParent);
 }
 
-export function slash(path: string):string {
+export function slash(path: string): string {
 	return path.replace(/\\/g, "/");
 }
 
 export function fileExtension(path: string): string {
-		const ext = path.split(".").pop();
-		return ext !== path ? `.${ext}` : "";
-	}
+	const ext = path.split(".").pop();
+	return ext !== path ? `.${ext}` : "";
+}
 
 export function removeBase(path: string, base: string): string {
-		if (path.startsWith(base)) {
-			return path.slice(removeTrailingForwardSlash(base).length);
-		}
-		return path;
+	if (path.startsWith(base)) {
+		return path.slice(removeTrailingForwardSlash(base).length);
 	}
+	return path;
+}
 
 const WITH_FILE_EXT = /\/[^/]+\.\w+$/;
 

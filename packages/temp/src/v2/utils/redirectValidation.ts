@@ -2,10 +2,13 @@
  * Utilities for handling HTTP redirects with validation
  */
 
-import { isRemoteAllowed } from '../internal-helpers/remote.js';
-import type { ResolvedImageConfig } from '../types.js';
+import { isRemoteAllowed } from "../internal-helpers/remote.js";
+import type { ResolvedImageConfig } from "../types.js";
 
-export type RemoteImageConfig = Pick<ResolvedImageConfig, 'remotePatterns' | 'domains'>;
+export type RemoteImageConfig = Pick<
+	ResolvedImageConfig,
+	"remotePatterns" | "domains"
+>;
 
 export type FetchRedirectOptions = {
 	/**
@@ -57,14 +60,17 @@ export type FetchRedirectOptions = {
  *
  * @param options The options for this fetch call.
  */
-export async function fetchWithRedirects(options: FetchRedirectOptions): Promise<Response> {
+export async function fetchWithRedirects(
+	options: FetchRedirectOptions,
+): Promise<Response> {
 	const {
 		url,
 		headers,
 		imageConfig,
 		fetchFn = globalThis.fetch,
 		redirectLimit = 10,
-		onMaxRedirectsExceeded = (_u) => new Error('Maximum redirect depth exceeded'),
+		onMaxRedirectsExceeded = (_u) =>
+			new Error("Maximum redirect depth exceeded"),
 		onMissingLocationHeader = (_s, _u) =>
 			new Error(`Redirect response ${_s} missing Location header`),
 		onDisallowedRedirect = (_current, _target) =>
@@ -74,16 +80,18 @@ export async function fetchWithRedirects(options: FetchRedirectOptions): Promise
 	} = options;
 
 	if (redirectLimit <= 0) {
-		throw onMaxRedirectsExceeded(typeof url === 'string' ? url : url.toString());
+		throw onMaxRedirectsExceeded(
+			typeof url === "string" ? url : url.toString(),
+		);
 	}
 
-	const urlString = typeof url === 'string' ? url : url.toString();
+	const urlString = typeof url === "string" ? url : url.toString();
 	const req = new Request(url, { headers });
-	const res = await fetchFn(req, { redirect: 'manual' });
+	const res = await fetchFn(req, { redirect: "manual" });
 
 	// Handle redirects (301, 302, 303, 307, 308 are actual redirects, not 304 Not Modified)
 	if ([301, 302, 303, 307, 308].includes(res.status)) {
-		const location = res.headers.get('Location');
+		const location = res.headers.get("Location");
 		if (!location) {
 			throw onMissingLocationHeader(res.status, urlString);
 		}

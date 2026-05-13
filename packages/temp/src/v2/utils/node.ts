@@ -1,11 +1,11 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { encodeBase64 } from "@oslojs/encoding";
 import type * as vite from "vite";
 import { prependForwardSlash, slash } from "../internal-helpers/path.js";
 import type { ImageMetadata } from "../types.js";
 import { imageMetadata } from "./metadata.js";
-import { encodeBase64 } from "@oslojs/encoding";
 
 export { hashTransform, propsToFilename } from "./hash.js";
 
@@ -109,11 +109,12 @@ export async function emitImageMetadata(
 
 	// Build
 	let isBuild = typeof fileEmitter === "function";
-	if (isBuild) {
+	// has to be duplicated because TS is not smart enough
+	if (typeof fileEmitter === "function") {
 		const pathname = decodeURI(url.pathname);
 		const filename = path.basename(
 			pathname,
-			path.extname(pathname) + `.${fileMetadata.format}`,
+			`${path.extname(pathname)}.${fileMetadata.format}`,
 		);
 
 		try {
@@ -121,10 +122,10 @@ export async function emitImageMetadata(
 
 			if (fileMetadata.format === "svg") {
 				// check if this content already exists
-				handle = await handleSvgDeduplication(fileData, filename, fileEmitter!);
+				handle = await handleSvgDeduplication(fileData, filename, fileEmitter);
 			} else {
 				// Non-SVG assets: emit normally
-				handle = fileEmitter!({
+				handle = fileEmitter({
 					name: filename,
 					source: fileData,
 					type: "asset",
@@ -143,8 +144,7 @@ export async function emitImageMetadata(
 		url.searchParams.append("origHeight", fileMetadata.height.toString());
 		url.searchParams.append("origFormat", fileMetadata.format);
 
-		emittedImage.src =
-			`/@fs` + prependForwardSlash(fileURLToNormalizedPath(url));
+		emittedImage.src = `/@fs${prependForwardSlash(fileURLToNormalizedPath(url))}`;
 	}
 
 	return emittedImage as ImageMetadataWithContents;

@@ -1,9 +1,12 @@
-import { isRemoteAllowed } from '../internal-helpers/remote.js';
-import type { ImageMetadata, ResolvedImageConfig } from '../types.js';
-import { imageMetadata } from './metadata.js';
-import { fetchWithRedirects } from './redirectValidation.js';
+import { isRemoteAllowed } from "../internal-helpers/remote.js";
+import type { ImageMetadata, ResolvedImageConfig } from "../types.js";
+import { imageMetadata } from "./metadata.js";
+import { fetchWithRedirects } from "./redirectValidation.js";
 
-type RemoteImageConfig = Pick<ResolvedImageConfig, 'domains' | 'remotePatterns'>;
+type RemoteImageConfig = Pick<
+	ResolvedImageConfig,
+	"domains" | "remotePatterns"
+>;
 
 /**
  * Infers the dimensions of a remote image by streaming its data and analyzing it progressively until sufficient metadata is available.
@@ -16,7 +19,7 @@ type RemoteImageConfig = Pick<ResolvedImageConfig, 'domains' | 'remotePatterns'>
 export async function inferRemoteSize(
 	url: string,
 	imageConfig?: RemoteImageConfig,
-): Promise<Omit<ImageMetadata, 'src' | 'fsPath'>> {
+): Promise<Omit<ImageMetadata, "src" | "fsPath">> {
 	if (!URL.canParse(url)) {
 		throw new Error("Failed to retrieve remote image dimensions");
 	}
@@ -30,7 +33,7 @@ export async function inferRemoteSize(
 
 	if (!allowlistConfig) {
 		const parsedUrl = new URL(url);
-		if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+		if (!["http:", "https:"].includes(parsedUrl.protocol)) {
 			throw new Error("Failed to retrieve remote image dimensions");
 		}
 	}
@@ -82,7 +85,7 @@ export async function inferRemoteSize(
 			value = readResult.value;
 
 			// Accumulate chunks
-			let tmp = new Uint8Array(accumulatedChunks.length + value.length);
+			const tmp = new Uint8Array(accumulatedChunks.length + value.length);
 			tmp.set(accumulatedChunks, 0);
 			tmp.set(value, accumulatedChunks.length);
 			accumulatedChunks = tmp;
